@@ -30,6 +30,10 @@ public class ChunkTerminalImpl implements ChunkReceiver{
     public void add(XMLEvent event) {
         System.out.println(event.toString());
         System.out.println("Adding Terminal");
+    }
+
+    @Override
+    public void endAll() {
 
     }
 }

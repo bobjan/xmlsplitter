@@ -4,10 +4,7 @@ import javax.xml.stream.XMLEventWriter;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.XMLEvent;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+import java.io.*;
 import java.nio.file.FileSystems;
 
 /**
@@ -20,7 +17,7 @@ import java.nio.file.FileSystems;
  *
  *
  * */
-public class ChunkBufferedImpl implements ChunkReceiver {
+public class ChunkStringImpl implements ChunkReceiver {
     private static final int BUFFER_SIZE;
     static String fileName;
     static String fileType;
@@ -35,9 +32,14 @@ public class ChunkBufferedImpl implements ChunkReceiver {
 
     private static int increment = 0;
 
+
+    BufferedWriter bufferedWriter;
+
     XMLOutputFactory outputFactory;
 
     XMLEventWriter xmlWriter;
+
+    StringBuilder stringBuilder = new StringBuilder();
 
     public static class Builder {
         String fileName;
@@ -59,14 +61,12 @@ public class ChunkBufferedImpl implements ChunkReceiver {
             return this;
         }
 
-
-
-        ChunkBufferedImpl build() {
-            ChunkBufferedImpl chunk = new ChunkBufferedImpl();
-            ChunkBufferedImpl.folder = this.folder;
-            ChunkBufferedImpl.fileName = this.fileName;
-            ChunkBufferedImpl.fileType = this.fileType;
-            ChunkBufferedImpl.built = true;
+        ChunkStringImpl build() {
+            ChunkStringImpl chunk = new ChunkStringImpl();
+            ChunkStringImpl.folder = this.folder;
+            ChunkStringImpl.fileName = this.fileName;
+            ChunkStringImpl.fileType = this.fileType;
+            ChunkStringImpl.built = true;
             return chunk;
         }
     }
@@ -75,14 +75,12 @@ public class ChunkBufferedImpl implements ChunkReceiver {
  *
  *
  * */
-    public ChunkBufferedImpl() {
+    public ChunkStringImpl() {
         if (built) {    // If not created via Builder, it must not work at all
-            outputFactory = XMLOutputFactory.newInstance();
-            File outputFile = new File(String.format("%s%s%s_%06d.%s", folder,separator, fileName, ++increment, fileType));
-
+           File outputFile = new File(String.format("%s%s%s_%06d.%s", folder,separator, fileName, ++increment, fileType));
             try {
-                xmlWriter = outputFactory.createXMLEventWriter(new BufferedOutputStream(new FileOutputStream(outputFile), BUFFER_SIZE));
-            } catch (XMLStreamException | FileNotFoundException e) {
+                bufferedWriter = new BufferedWriter(new FileWriter(outputFile));
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }
@@ -90,25 +88,40 @@ public class ChunkBufferedImpl implements ChunkReceiver {
 
     @Override
     public void close() {
-        if (xmlWriter != null) {
+        if(bufferedWriter != null){
             try {
-                xmlWriter.close();
-            } catch (XMLStreamException ignored) {
+                bufferedWriter.write(stringBuilder.toString());
+                bufferedWriter.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }
 
     @Override
     public void add(XMLEvent event) {
-        try {
-            if (xmlWriter != null) xmlWriter.add(event);
-        } catch (XMLStreamException e) {
-            e.printStackTrace();
-        }
+        if(event.toString().equals("&"))
+            stringBuilder.append("&amp;");
+        else
+        if(event.toString().equals("'"))
+            stringBuilder.append("&apos;");
+        else
+        if(event.toString().equals("\""))
+            stringBuilder.append("&quot;");
+        else
+        if(event.toString().equals(">"))
+            stringBuilder.append("&gt;");
+        else
+        if(event.toString().equals("<"))
+            stringBuilder.append("&lt;");
+        else
+        stringBuilder.append(event.toString());
+        stringBuilder.append(event.toString());
+        stringBuilder.append(event.toString());
     }
 
     @Override
     public void endAll() {
-
+        System.out.println("Total " + increment);
     }
 }

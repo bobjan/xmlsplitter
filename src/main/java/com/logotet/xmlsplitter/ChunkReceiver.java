@@ -15,4 +15,6 @@ public interface ChunkReceiver {
     public void close();
 
     public void add(XMLEvent event);
+
+    public void endAll();
 }
